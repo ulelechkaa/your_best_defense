@@ -1,4 +1,5 @@
 import os
+import time
 import telebot
 import pickle
 import string
@@ -52,6 +53,9 @@ def handle_text(message):
     msg = bot.reply_to(message, "⏳ Анализирую текст...")
 
     try:
+        # Пауза 2 секунды, чтобы не превышать лимиты Google Translate
+        time.sleep(2) 
+        
         input_sms_translated = GoogleTranslator(source='ru', target='en').translate(input_sms)
         
         transformed_sms = preprocess_text(input_sms_translated)
@@ -90,7 +94,13 @@ def handle_text(message):
         bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=answer, parse_mode='Markdown')
 
     except Exception as e:
-        bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=f"Произошла ошибка при анализе: {e}")
+        # Если Google заблокировал запрос, выводим понятный текст
+        if "Server Error" in str(e) or "too many requests" in str(e):
+            error_text = "⏳ Google Translate временно заблокировал запросы. Пожалуйста, подождите 30 минут и попробуйте снова."
+        else:
+            error_text = f"Произошла ошибка при анализе: {e}"
+            
+        bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=error_text)
 
 # Запуск бота
 print("Бот запущен...")
