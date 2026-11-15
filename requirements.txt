@@ -66,3 +66,4 @@ vaderSentiment==3.3.2
 validators==0.20.0
 watchdog==2.2.1
 zipp==3.14.0
+Flask
