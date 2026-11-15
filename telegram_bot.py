@@ -21,6 +21,7 @@ bot = telebot.TeleBot(TOKEN)
 
 # Загрузка ресурсов
 nltk.download('punkt', quiet=True)
+nltk.download('punkt_tab', quiet=True) 
 nltk.download('stopwords', quiet=True)
 ps = PorterStemmer()
 sentiment_analyzer = SentimentIntensityAnalyzer()
