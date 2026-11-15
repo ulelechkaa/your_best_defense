@@ -4,6 +4,8 @@ import telebot
 import pickle
 import string
 import nltk
+import threading
+from flask import Flask
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from textblob import TextBlob
 from freetrans import SyncTranslator
@@ -21,7 +23,7 @@ bot = telebot.TeleBot(TOKEN)
 
 # Загрузка ресурсов
 nltk.download('punkt', quiet=True)
-nltk.download('punkt_tab', quiet=True) 
+nltk.download('punkt_tab', quiet=True)
 nltk.download('stopwords', quiet=True)
 ps = PorterStemmer()
 sentiment_analyzer = SentimentIntensityAnalyzer()
@@ -30,7 +32,17 @@ sentiment_analyzer = SentimentIntensityAnalyzer()
 tfidf = pickle.load(open('vectorizer.pkl', 'rb'))
 model = pickle.load(open('model.pkl', 'rb'))
 
-# Функции
+# --- ВЕБ-СЕРВЕР ДЛЯ UPTIMEROBOT ---
+app = Flask(__name__)
+
+@app.route('/')
+def health_check():
+    return "OK"
+
+def run_flask():
+    app.run(host='0.0.0.0', port=8080)
+
+# --- ФУНКЦИИ БОТА ---
 def preprocess_text(text):
     text = text.lower()
     words = nltk.word_tokenize(text)
@@ -53,10 +65,8 @@ def handle_text(message):
     msg = bot.reply_to(message, "⏳ Анализирую текст...")
 
     try:
-        # Пауза 2 секунды, чтобы не превышать лимиты
         time.sleep(2) 
         
-        # Перевод текста (исправленные отступы)
         with SyncTranslator() as translator:
             input_sms_translated = translator.translate(input_sms, dest='en').text
         
@@ -96,7 +106,6 @@ def handle_text(message):
         bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=answer, parse_mode='Markdown')
 
     except Exception as e:
-        # Если Google заблокировал запрос, выводим понятный текст
         if "Server Error" in str(e) or "too many requests" in str(e):
             error_text = "⏳ Сервис перевода временно недоступен. Пожалуйста, подождите 30 минут и попробуйте снова."
         else:
@@ -104,6 +113,10 @@ def handle_text(message):
             
         bot.edit_message_text(chat_id=msg.chat.id, message_id=msg.message_id, text=error_text)
 
-# Запуск бота
-print("Бот запущен...")
-bot.infinity_polling()
+# --- ЗАПУСК ---
+if __name__ == '__main__':
+    # Запускаем веб-сервер в отдельном потоке
+    threading.Thread(target=run_flask, daemon=True).start()
+    
+    print("Бот запущен...")
+    bot.infinity_polling()
