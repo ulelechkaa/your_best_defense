@@ -6,12 +6,11 @@ import string
 import nltk
 from vaderSentiment.vaderSentiment import SentimentIntensityAnalyzer
 from textblob import TextBlob
-from freetrans import SyncTransLator
+from freetrans import SyncTranslator
 from nltk.corpus import stopwords
 from nltk.stem.porter import PorterStemmer
 
 # --- НАСТРОЙКИ ---
-# Берем токен из переменных окружения (Environment Variables на Render)
 TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN')
 
 if not TOKEN:
@@ -53,11 +52,12 @@ def handle_text(message):
     msg = bot.reply_to(message, "⏳ Анализирую текст...")
 
     try:
-        # Пауза 2 секунды, чтобы не превышать лимиты Google Translate
+        # Пауза 2 секунды, чтобы не превышать лимиты
         time.sleep(2) 
         
-    with SyncTranslator() as translator:
-        input_sms_translated = translator.translate(input_sms, dest='en').text
+        # Перевод текста (исправленные отступы)
+        with SyncTranslator() as translator:
+            input_sms_translated = translator.translate(input_sms, dest='en').text
         
         transformed_sms = preprocess_text(input_sms_translated)
         vector_input = tfidf.transform([transformed_sms])
@@ -97,7 +97,7 @@ def handle_text(message):
     except Exception as e:
         # Если Google заблокировал запрос, выводим понятный текст
         if "Server Error" in str(e) or "too many requests" in str(e):
-            error_text = "⏳ Google Translate временно заблокировал запросы. Пожалуйста, подождите 30 минут и попробуйте снова."
+            error_text = "⏳ Сервис перевода временно недоступен. Пожалуйста, подождите 30 минут и попробуйте снова."
         else:
             error_text = f"Произошла ошибка при анализе: {e}"
             
