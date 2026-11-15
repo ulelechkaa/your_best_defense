@@ -56,8 +56,8 @@ def handle_text(message):
         # Пауза 2 секунды, чтобы не превышать лимиты Google Translate
         time.sleep(2) 
         
-        with SyncTranslator() as translator:
-    input_sms_translated = translator.translate(input_sms, dest='en').text
+    with SyncTranslator() as translator:
+        input_sms_translated = translator.translate(input_sms, dest='en').text
         
         transformed_sms = preprocess_text(input_sms_translated)
         vector_input = tfidf.transform([transformed_sms])
